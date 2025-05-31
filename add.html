@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thêm mới ghi chú</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f7f7f7;
+        margin: 0;
+        padding: 0 8px;
+      }
+      .container {
+        max-width: 700px;
+        margin: 16px auto;
+        background: #fff;
+        padding: 32px;
+        border-radius: 18px;
+        box-shadow: 0 4px 24px #ff5e6222;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      h1 {
+        text-align: center;
+        color: #ff5e62;
+        margin-bottom: 24px;
+      }
+      input,
+      textarea {
+        min-width: 100%;
+        margin-bottom: 18px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid #ff996655;
+        box-shadow: 0 1px 4px #ff5e6222;
+        font-size: 1rem;
+        transition: border 0.2s;
+      }
+      input:focus,
+      textarea:focus {
+        border: 1.5px solid #ff5e62;
+        outline: none;
+      }
+      button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(90deg, #ff9966 0%, #ff5e62 100%);
+        color: #fff;
+        font-size: 2rem;
+        cursor: pointer;
+        box-shadow: 0 4px 24px #ff5e6266;
+        border: none;
+        margin: 0 auto;
+        transition: background 0.2s, box-shadow 0.2s;
+      }
+      button:hover {
+        background: #ff9966;
+        box-shadow: 0 6px 32px #ff5e6299;
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 18px;
+        color: #ff5e62;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 1.05rem;
+        transition: color 0.18s;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+        color: #ff9966;
+      }
+      .error {
+        color: #ff5e62;
+        margin-bottom: 12px;
+        text-align: center;
+      }
+      /* Header styles from index.html */
+      .main-header {
+        width: calc(100% + 16px);
+        margin-left: -8px;
+        margin-right: -8px;
+        background: linear-gradient(90deg, #ff9966 0%, #ff5e62 100%);
+        color: #fff;
+        font-size: 1.35rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        padding: 18px 0px 14px 0px;
+        margin-bottom: 0;
+        box-shadow: 0 2px 12px #ff996633;
+        position: sticky;
+        top: 0;
+        z-index: 10001;
+      }
+      .main-header .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="main-header">
+      <div class="header-content">
+        <a
+          href="index.html"
+          style="
+            color: inherit;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: inherit;
+          "
+          ><span>Guitar Notes</span></a
+        >
+      </div>
+    </header>
+    <div class="container">
+      <h1>Thêm mới ghi chú</h1>
+      <div id="error" class="error"></div>
+      <input type="text" id="title" placeholder="Tiêu đề ghi chú" />
+      <textarea
+        id="content"
+        placeholder="Nội dung ghi chú..."
+        rows="6"
+      ></textarea>
+      <button onclick="addNote()" title="Lưu ghi chú">
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M5 12h14M12 5v14" />
+        </svg>
+      </button>
+    </div>
+    <script>
+      function addNote() {
+        const title = document.getElementById("title").value.trim();
+        const content = document.getElementById("content").value.trim();
+        const errorDiv = document.getElementById("error");
+        errorDiv.textContent = "";
+        if (!title || !content) {
+          errorDiv.textContent = "Nhập đầy đủ giùm cái đi";
+          return;
+        }
+        if (!confirm("Chắc chưa?????")) {
+          return;
+        }
+        fetch("/api/notes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, content }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              window.location.href = "index.html";
+            } else {
+              errorDiv.textContent = data.error || "Có lỗi xảy ra.";
+            }
+          })
+          .catch(() => {
+            errorDiv.textContent = "Không thể kết nối máy chủ.";
+          });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem ghi chú</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            background: #f7f7f7;
+            color: #222;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0px 8px;
+        }
+        .note-view {
+            background: #fff;
+            padding: 32px 16px 24px 16px;
+            border-radius: 18px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 6px 32px #0001;
+            font-size: 1.15rem;
+            word-break: break-word;
+            margin: 12px 12px;
+            box-sizing: border-box;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #fff;
+            background: linear-gradient(90deg, #ff5e62 0%, #ff9966 100%);
+            border: none;
+            padding: 12px 22px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 2px 8px #0002;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .back-btn:hover {
+            background: linear-gradient(90deg, #ff9966 0%, #ff5e62 100%);
+            transform: translateY(-2px) scale(1.03);
+        }
+        #noteTitle {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+            margin-top: 0;
+            color: #ff9966;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        #noteContent {
+            font-size: 1.13rem;
+            line-height: 1.7;
+            color: #222;
+            word-break: break-word;
+            padding: 0 2px;
+        }
+        @media (max-width: 600px) {
+            .note-view {
+                border-radius: 10px;
+                font-size: 0.88rem;
+                width: auto;
+                max-width: 100%;
+                margin: 0 8px;
+                box-sizing: border-box;
+            }
+            .back-btn {
+                font-size: 1rem;
+                padding: 10px 16px;
+            }
+            #noteTitle {
+                font-size: 1.15rem;
+            }
+            #noteContent {
+                font-size: 0.98rem;
+            }
+            #noteNav {
+                gap: 4px;
+                font-size: 0.95rem;
+                height: 50px;
+            }
+        }
+        /* Đánh dấu đỏ cho các từ trong [] */
+        #noteContent span.red-bracket {
+            font-weight: bold;
+            /* background: #ffeded; */
+            color: #d60000 !important;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #noteNav {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 2px;
+            scrollbar-width: thin;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+        #noteNav button, #noteNav span {
+            white-space: nowrap;
+            display: inline-block;
+        }
+        .main-header {
+            width: calc(100% + 16px);
+            margin-left: -8px;
+            margin-right: -8px;
+            background: linear-gradient(90deg, #ff9966 0%, #ff5e62 100%);
+            color: #fff;
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 18px 0px 14px 0px;
+            margin-bottom: 0;
+            box-shadow: 0 2px 12px #ff996633;
+            position: sticky;
+            top: 0;
+            z-index: 10001;
+        }
+        .main-header .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+        }
+        .auto-scroll-label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #fff;
+            padding: 4px 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px #0001;
+            border: 1px solid #eee;
+            color: #222;
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+        #autoScrollToggle {
+            accent-color: #ff9966;
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <a href="index.html" style="color:inherit;text-decoration:none;font-weight:700;font-size:inherit;"><span>Guitar Notes</span></a>
+            <label class="auto-scroll-label">
+                <input type="checkbox" id="autoScrollToggle">
+                Auto Scroll
+            </label>
+        </div>
+    </header>
+
+ 
+    <div class="note-view" style="margin: 8px;">
+        <div id="noteNav" style="display:flex;align-items:center;gap:8px;margin-bottom:18px;overflow-x:auto;"></div>
+        <br>
+        <h2 id="noteTitle">Đang tải...</h2>
+        <div id="noteContent">Đang tải ghi chú...</div>
+    </div>
+
+ 
+    <!-- Popup hiển thị khi click vào .red-bracket -->
+    <div id="cookPopup" style="display:none;position:fixed;z-index:9999;min-width:180px;max-width:90vw;background:#fff;border-radius:10px;box-shadow:0 4px 24px #0002;padding:16px 18px 10px 18px;text-align:center;transition:opacity 0.15s;opacity:0;border:1.5px solid #d8d8d8;">
+        <div id="cookPopupMsg"></div>
+    </div>
+    <script>
+    function getNoteId() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('id');
+    }
+    function loadNote() {
+        const id = getNoteId();
+        fetch('/api/notes')
+            .then(res => res.json())
+            .then(notes => {
+                const note = notes[id];
+                const noteTitle = document.getElementById('noteTitle');
+                const noteContent = document.getElementById('noteContent');
+                // Thanh điều hướng ghi chú
+                const noteNav = document.getElementById('noteNav');
+                // Lấy danh sách id và tiêu đề
+                const noteIds = Object.keys(notes);
+                const idx = noteIds.indexOf(id);
+                let navItems = [];
+                let start = Math.max(0, idx - 2);
+                let end = Math.min(noteIds.length, start + 5);
+                if (end - start < 5) start = Math.max(0, end - 5);
+                for (let i = start; i < end; i++) {
+                    const navId = noteIds[i];
+                    const navTitle = notes[navId].title || `Ghi chú ${i+1}`;
+                    if (navId === id) {
+                        navItems.push(`<span class="note-nav-current" style=\"padding:7px 16px;border-radius:7px;border:1.5px solid #ff9966;background:#fff3e6;color:#ff9966;font-weight:600;box-shadow:0 2px 8px #ff996633;\">${navTitle}</span>`);
+                    } else {
+                        navItems.push(`<button onclick=\"window.location.search='?id=${navId}'\" style=\"padding:7px 16px;border-radius:7px;border:1px solid #eee;background:#fafafa;cursor:pointer;font-size:0.98rem;\">${navTitle}</button>`);
+                    }
+                }
+                noteNav.innerHTML = navItems.join('');
+                // Sau khi render, scroll đến item hiện tại
+                const currentNavItem = document.querySelector('#noteNav .note-nav-current');
+                if (currentNavItem) {
+                    currentNavItem.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+                if (note !== undefined) {
+                    noteTitle.textContent = note.title || 'Không tiêu đề';
+                    let html = (note.content || '').replace(/\r\n|\r|\n/g, '<br>');
+                    html = html.replace(/\[([^\[\]]+)\]/g, '<span class="red-bracket">[$1]</span>');
+                    noteContent.innerHTML = html;
+                    // Gán sự kiện click cho các phần tử red-bracket
+                    let currentBracketEl = null;
+                    function positionPopupToBracket() {
+                        const popup = document.getElementById('cookPopup');
+                        if (!currentBracketEl) return;
+                        const rect = currentBracketEl.getBoundingClientRect();
+                        // Đặt popup phía trên hoặc dưới phần tử, căn giữa theo chiều ngang
+                        const popupRect = popup.getBoundingClientRect();
+                        let left = rect.left + (rect.width - popupRect.width) / 2;
+                        let top = rect.bottom + 6; // Hiện phía dưới, cách 6px
+                        // Nếu tràn phải
+                        if (left + popupRect.width > window.innerWidth) left = window.innerWidth - popupRect.width - 8;
+                        if (left < 0) left = 8;
+                        // Nếu tràn dưới màn hình thì hiện phía trên
+                        if (top + popupRect.height > window.innerHeight) top = rect.top - popupRect.height - 6;
+                        if (top < 0) top = 8;
+                        popup.style.left = left + 'px';
+                        popup.style.top = top + 'px';
+                    }
+                    Array.from(document.querySelectorAll('.red-bracket')).forEach(el => {
+                        el.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const popup = document.getElementById('cookPopup');
+                            const msgList = [
+                                'Không biết thì cook',
+                                'Hợp âm này mà không biết?',
+                                'Lên Google search giùm cái',
+                                'Really Nigger?',
+                                'Chịu.'
+                            ];
+                            const msg = msgList[Math.floor(Math.random() * msgList.length)];
+                            document.getElementById('cookPopupMsg').textContent = msg;
+                            currentBracketEl = this;
+                            popup.style.display = 'block';
+                            popup.style.opacity = '0';
+                            setTimeout(() => {
+                                positionPopupToBracket();
+                                popup.style.opacity = '1';
+                            }, 10);
+                            // Lắng nghe scroll/resize để reposition
+                            window.addEventListener('scroll', positionPopupToBracket, true);
+                            window.addEventListener('resize', positionPopupToBracket, true);
+                        });
+                    });
+                    // Đóng popup khi bấm ra ngoài
+                    function closeCookPopup() {
+                        document.getElementById('cookPopup').style.display = 'none';
+                        document.getElementById('cookPopup').style.opacity = '0';
+                        currentBracketEl = null;
+                        window.removeEventListener('scroll', positionPopupToBracket, true);
+                        window.removeEventListener('resize', positionPopupToBracket, true);
+                    }
+                    document.body.addEventListener('click', closeCookPopup);
+                    document.getElementById('cookPopup').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                    });
+                } else {
+                    noteTitle.textContent = '';
+                    noteContent.textContent = 'Không tìm thấy ghi chú!';
+                }
+                // Auto scroll chỉ chạy sau khi render nội dung
+                (function() {
+                    let autoScrollTimer = null;
+                    let autoScrollInterval = null;
+                    let userScrolled = false;
+                    function startAutoScroll() {
+                        if (userScrolled) return;
+                        if (!document.getElementById('autoScrollToggle').checked) return;
+                        autoScrollInterval = setInterval(() => {
+                            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 2) {
+                                clearInterval(autoScrollInterval);
+                            } else {
+                                window.scrollBy({ top: 1, behavior: 'smooth' });
+                            }
+                        }, 24);
+                    }
+                    window.addEventListener('wheel', () => {
+                        userScrolled = true;
+                        clearInterval(autoScrollInterval);
+                        clearTimeout(autoScrollTimer);
+                    }, { passive: true });
+                    window.addEventListener('touchmove', () => {
+                        userScrolled = true;
+                        clearInterval(autoScrollInterval);
+                        clearTimeout(autoScrollTimer);
+                    }, { passive: true });
+                    // Khi bật/tắt checkbox thì reset auto scroll
+                    document.getElementById('autoScrollToggle').addEventListener('change', function() {
+                        userScrolled = false;
+                        clearInterval(autoScrollInterval);
+                        clearTimeout(autoScrollTimer);
+                        if (this.checked && document.body.scrollHeight > window.innerHeight + 10) {
+                            autoScrollTimer = setTimeout(startAutoScroll, 3000);
+                        }
+                    });
+                    if (document.body.scrollHeight > window.innerHeight + 10 && document.getElementById('autoScrollToggle').checked) {
+                        autoScrollTimer = setTimeout(startAutoScroll, 3000);
+                    }
+                })();
+            });
+    }
+    loadNote();
+    // Đặt trạng thái checkbox theo localStorage khi trang load
+    const autoScrollToggle = document.getElementById('autoScrollToggle');
+    const saved = localStorage.getItem('autoScroll');
+    autoScrollToggle.checked = saved === 'true';
+    // Khi người dùng thay đổi checkbox, lưu lại vào localStorage
+    autoScrollToggle.addEventListener('change', function() {
+        localStorage.setItem('autoScroll', this.checked ? 'true' : 'false');
+    });
+    </script>
+</body>
+</html> 

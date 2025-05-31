@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thêm mới ghi chú</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f7f7f7;
+        margin: 0;
+        padding: 0 8px;
+      }
+      .container {
+        max-width: 700px;
+        margin: 16px auto;
+        background: #fff;
+        padding: 32px;
+        border-radius: 18px;
+        box-shadow: 0 4px 24px #ff5e6222;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      h1 {
+        text-align: center;
+        color: #ff5e62;
+        margin-bottom: 24px;
+      }
+
+      /* Header styles from index.html */
+      .main-header {
+        width: calc(100% + 16px);
+        margin-left: -8px;
+        margin-right: -8px;
+        background: linear-gradient(90deg, #ff9966 0%, #ff5e62 100%);
+        color: #fff;
+        font-size: 1.35rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        padding: 18px 0px 14px 0px;
+        margin-bottom: 0;
+        box-shadow: 0 2px 12px #ff996633;
+        position: sticky;
+        top: 0;
+        z-index: 10001;
+      }
+      .main-header .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+      #note-list {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+        width: 100%;
+      }
+      .drag-handle {
+        cursor: grab;
+        margin-left: 18px;
+        font-size: 1.5em;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        height: 100%;
+      }
+      .drag-handle:active {
+        color: #ff5e62;
+      }
+      .note-item {
+        display: flex;
+        align-items: center;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px #ff5e6222;
+        padding: 8px 12px;
+        margin: 8px 0;
+        min-height: 44px;
+        gap: 12px;
+      }
+      .note-title {
+        flex: 1;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #222;
+      }
+      .note-actions {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 18px;
+        justify-content: flex-end;
+        width: 100%;
+      }
+      .note-actions button {
+        background: linear-gradient(90deg, #ff9966 0%, #ff5e62 100%);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 18px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 8px #ff5e6222;
+        transition: background 0.2s;
+      }
+      .note-actions button:hover {
+        background: linear-gradient(90deg, #ff5e62 0%, #ff9966 100%);
+      }
+      .delete-btn {
+        background: #fff0f0;
+        color: #ff5e62;
+        border: 1px solid #ff5e62;
+        border-radius: 6px;
+        padding: 6px 14px;
+        font-size: 0.98rem;
+        font-weight: 500;
+        cursor: pointer;
+        margin-left: 8px;
+        transition: background 0.2s, color 0.2s;
+      }
+      .delete-btn:hover {
+        background: #ff5e62;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="main-header">
+      <div class="header-content">
+        <a
+          href="index.html"
+          style="
+            color: inherit;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: inherit;
+          "
+          ><span>Guitar Notes</span></a
+        >
+      </div>
+    </header>
+    <div class="container">
+      <h1>Sắp xếp ghi chú</h1>
+      <div class="note-actions">
+        <button id="reset-btn" type="button">Reset</button>
+        <button id="save-btn" type="button">Save</button>
+      </div>
+      <ul id="note-list"></ul>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+      let notes = [];
+      let originalNotes = [];
+
+      // Lấy dữ liệu từ API
+      async function fetchNotes() {
+        try {
+          const res = await fetch("/api/notes");
+          let data = await res.json();
+          data = data.map((note, idx) => ({ ...note, id: idx + 1 }));
+          notes = data;
+          originalNotes = JSON.parse(JSON.stringify(data)); // Lưu bản gốc
+          renderNotes();
+        } catch (e) {
+          alert("Không thể tải ghi chú từ API");
+        }
+      }
+
+      // Render danh sách note
+      function renderNotes() {
+        const list = document.getElementById("note-list");
+        list.innerHTML = "";
+        notes.forEach((note) => {
+          const li = document.createElement("li");
+          li.className = "note-item";
+          li.setAttribute("data-id", note.id);
+
+          // Tạo icon drag-handle
+          const dragHandle = document.createElement("span");
+          dragHandle.className = "drag-handle";
+          dragHandle.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="30px" height="30px" viewBox="0 0 15 15" fill="none">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M2.49998 4.09998C2.27906 4.09998 2.09998 4.27906 2.09998 4.49998C2.09998 4.72089 2.27906 4.89998 2.49998 4.89998H12.5C12.7209 4.89998 12.9 4.72089 12.9 4.49998C12.9 4.27906 12.7209 4.09998 12.5 4.09998H2.49998ZM2.49998 6.09998C2.27906 6.09998 2.09998 6.27906 2.09998 6.49998C2.09998 6.72089 2.27906 6.89998 2.49998 6.89998H12.5C12.7209 6.89998 12.9 6.72089 12.9 6.49998C12.9 6.27906 12.7209 6.09998 12.5 6.09998H2.49998ZM2.09998 8.49998C2.09998 8.27906 2.27906 8.09998 2.49998 8.09998H12.5C12.7209 8.09998 12.9 8.27906 12.9 8.49998C12.9 8.72089 12.7209 8.89998 12.5 8.89998H2.49998C2.27906 8.89998 2.09998 8.72089 2.09998 8.49998ZM2.49998 10.1C2.27906 10.1 2.09998 10.2791 2.09998 10.5C2.09998 10.7209 2.27906 10.9 2.49998 10.9H12.5C12.7209 10.9 12.9 10.7209 12.9 10.5C12.9 10.2791 12.7209 10.1 12.5 10.1H2.49998Z" fill="currentColor"/>
+        </svg>
+          `;
+
+          // Tạo phần tiêu đề ghi chú
+          const titleSpan = document.createElement("span");
+          titleSpan.className = "note-title";
+          titleSpan.textContent = note.title;
+
+          // Tạo nút Delete
+          const deleteBtn = document.createElement("button");
+          deleteBtn.className = "delete-btn";
+          deleteBtn.type = "button";
+          deleteBtn.textContent = "Delete";
+          deleteBtn.onclick = function () {
+            notes = notes.filter(n => n.id !== note.id);
+            renderNotes();
+          };
+
+          li.appendChild(dragHandle);
+          li.appendChild(titleSpan);
+          li.appendChild(deleteBtn);
+          list.appendChild(li);
+        });
+      }
+
+      // Kích hoạt drag & drop với SortableJS
+      new Sortable(document.getElementById("note-list"), {
+        animation: 150,
+        handle: ".drag-handle",
+        onEnd: function (evt) {
+          const newOrder = [];
+          document.querySelectorAll("#note-list li").forEach((li) => {
+            const id = parseInt(li.getAttribute("data-id"));
+            const note = notes.find((n) => n.id === id);
+            newOrder.push(note);
+          });
+          notes.splice(0, notes.length, ...newOrder);
+
+          // Gửi thứ tự mới lên API nếu muốn
+          // fetch('https://your-api.com/notes/reorder', {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify(notes.map(n => n.id))
+          // });
+        },
+      });
+
+      // Sự kiện cho nút Reset
+      document.getElementById("reset-btn").onclick = function () {
+        notes = JSON.parse(JSON.stringify(originalNotes));
+        renderNotes();
+      };
+
+      // Sự kiện cho nút Save
+      document.getElementById("save-btn").onclick = function () {
+        // Xác nhận trước khi lưu
+        if (!confirm('Bạn có chắc muốn lưu thứ tự mới không?')) return;
+
+        // Loại bỏ trường id khỏi mỗi note trước khi gửi lên server
+        const noteIdsOnly = notes.map(note => {
+          const { id, ...noteWithoutId } = note;
+          return noteWithoutId;
+        });
+
+   
+
+        // Gửi thứ tự mới lên API (bạn có thể thay đổi endpoint)
+        fetch('/api/sort', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(noteIdsOnly)
+        })
+          .then(res => {
+            if (res.ok) alert('Đã lưu thứ tự!');
+            else throw new Error();
+          })
+          .catch(() => alert('Lưu thất bại!'));
+      };
+
+      // Gọi API khi trang load
+      fetchNotes();
+    </script>
+  </body>
+</html>
