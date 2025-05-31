@@ -291,6 +291,9 @@
                     let autoScrollTimer = null;
                     let autoScrollInterval = null;
                     let userScrolled = false;
+                    function isMobile() {
+                        return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+                    }
                     function startAutoScroll() {
                         if (userScrolled) return;
                         if (!document.getElementById('autoScrollToggle').checked) return;
@@ -298,19 +301,24 @@
                             if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 2) {
                                 clearInterval(autoScrollInterval);
                             } else {
-                                window.scrollBy({ top: 1, behavior: 'smooth' });
+                                if (isMobile()) {
+                                    window.scrollBy(0, 1); // Chậm lại trên mobile
+                                } else {
+                                    window.scrollBy({ top: 1, behavior: 'smooth' });
+                                }
                             }
-                        }, 24);
+                        }, 40); // Tăng interval lên 40ms
                     }
-                    window.addEventListener('wheel', () => {
-                        userScrolled = true;
-                        clearInterval(autoScrollInterval);
-                        clearTimeout(autoScrollTimer);
+                    let lastTouchY = null;
+                    window.addEventListener('touchstart', (e) => {
+                        if (e.touches.length === 1) lastTouchY = e.touches[0].clientY;
                     }, { passive: true });
-                    window.addEventListener('touchmove', () => {
-                        userScrolled = true;
-                        clearInterval(autoScrollInterval);
-                        clearTimeout(autoScrollTimer);
+                    window.addEventListener('touchmove', (e) => {
+                        if (lastTouchY !== null && Math.abs(e.touches[0].clientY - lastTouchY) > 10) {
+                            userScrolled = true;
+                            clearInterval(autoScrollInterval);
+                            clearTimeout(autoScrollTimer);
+                        }
                     }, { passive: true });
                     // Khi bật/tắt checkbox thì reset auto scroll
                     document.getElementById('autoScrollToggle').addEventListener('change', function() {
